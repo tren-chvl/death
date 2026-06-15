@@ -445,9 +445,9 @@ Disassembly of section .note.ABI-tag:
 Disassembly of section .init_array:
 
 0000000000403df8 <__frame_dummy_init_array_entry>:
-  403df8:	50                   	push   %rax
-  403df9:	11 40 00             	adc    %eax,0x0(%rax)
-  403dfc:	00 00                	add    %al,(%rax)
+  403df8:	10 12                	adc    %dl,(%rdx)
+  403dfa:	40 00 00             	rex add %al,(%rax)
+  403dfd:	00 00                	add    %al,(%rax)
 	...
 
 Disassembly of section .fini_array:
