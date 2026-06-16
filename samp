@@ -1,5 +1,5 @@
 
-/tmp/test/sample1:     file format elf64-x86-64
+/tmp/test/a.out:     file format elf64-x86-64
 
 
 Disassembly of section .note.gnu.property:
@@ -445,9 +445,9 @@ Disassembly of section .note.ABI-tag:
 Disassembly of section .init_array:
 
 0000000000403df8 <__frame_dummy_init_array_entry>:
-  403df8:	10 12                	adc    %dl,(%rdx)
-  403dfa:	40 00 00             	rex add %al,(%rax)
-  403dfd:	00 00                	add    %al,(%rax)
+  403df8:	50                   	push   %rax
+  403df9:	11 40 00             	adc    %eax,0x0(%rax)
+  403dfc:	00 00                	add    %al,(%rax)
 	...
 
 Disassembly of section .fini_array:
@@ -662,3 +662,625 @@ Disassembly of section .comment:
   18:	31 34 2e             	xor    %esi,(%rsi,%rbp,1)
   1b:	32 2e                	xor    (%rsi),%ch
   1d:	30 00                	xor    %al,(%rax)
+
+Disassembly of section .evil:
+
+0000000000000000 <.evil>:
+   0:	48 31 c0             	xor    %rax,%rax
+   3:	48 31 c0             	xor    %rax,%rax
+   6:	48 31 c0             	xor    %rax,%rax
+   9:	48 31 c0             	xor    %rax,%rax
+   c:	48 31 c0             	xor    %rax,%rax
+   f:	48 31 c0             	xor    %rax,%rax
+  12:	48 31 c0             	xor    %rax,%rax
+  15:	01 02                	add    %eax,(%rdx)
+  17:	03 04 05 06 07 08 01 	add    0x1080706(,%rax,1),%eax
+  1e:	02 03                	add    (%rbx),%al
+  20:	04 05                	add    $0x5,%al
+  22:	06                   	(bad)
+  23:	07                   	(bad)
+  24:	08 01                	or     %al,(%rcx)
+  26:	02 03                	add    (%rbx),%al
+  28:	04 05                	add    $0x5,%al
+  2a:	06                   	(bad)
+  2b:	07                   	(bad)
+  2c:	08 01                	or     %al,(%rcx)
+  2e:	02 03                	add    (%rbx),%al
+  30:	04 05                	add    $0x5,%al
+  32:	06                   	(bad)
+  33:	07                   	(bad)
+  34:	08 01                	or     %al,(%rcx)
+  36:	02 03                	add    (%rbx),%al
+  38:	04 05                	add    $0x5,%al
+  3a:	06                   	(bad)
+  3b:	07                   	(bad)
+  3c:	08 01                	or     %al,(%rcx)
+  3e:	02 03                	add    (%rbx),%al
+  40:	04 05                	add    $0x5,%al
+  42:	06                   	(bad)
+  43:	07                   	(bad)
+  44:	08 01                	or     %al,(%rcx)
+  46:	02 03                	add    (%rbx),%al
+  48:	04 05                	add    $0x5,%al
+  4a:	06                   	(bad)
+  4b:	07                   	(bad)
+  4c:	08 01                	or     %al,(%rcx)
+  4e:	02 03                	add    (%rbx),%al
+  50:	04 05                	add    $0x5,%al
+  52:	06                   	(bad)
+  53:	07                   	(bad)
+  54:	08 01                	or     %al,(%rcx)
+  56:	02 03                	add    (%rbx),%al
+  58:	04 05                	add    $0x5,%al
+  5a:	06                   	(bad)
+  5b:	07                   	(bad)
+  5c:	08 01                	or     %al,(%rcx)
+  5e:	02 03                	add    (%rbx),%al
+  60:	04 05                	add    $0x5,%al
+  62:	06                   	(bad)
+  63:	07                   	(bad)
+  64:	08 01                	or     %al,(%rcx)
+  66:	02 03                	add    (%rbx),%al
+  68:	04 05                	add    $0x5,%al
+  6a:	06                   	(bad)
+  6b:	07                   	(bad)
+  6c:	08 01                	or     %al,(%rcx)
+  6e:	02 03                	add    (%rbx),%al
+  70:	04 05                	add    $0x5,%al
+  72:	06                   	(bad)
+  73:	07                   	(bad)
+  74:	08 01                	or     %al,(%rcx)
+  76:	02 03                	add    (%rbx),%al
+  78:	04 05                	add    $0x5,%al
+  7a:	06                   	(bad)
+  7b:	07                   	(bad)
+  7c:	08 01                	or     %al,(%rcx)
+  7e:	02 03                	add    (%rbx),%al
+  80:	04 05                	add    $0x5,%al
+  82:	06                   	(bad)
+  83:	07                   	(bad)
+  84:	08 01                	or     %al,(%rcx)
+  86:	02 03                	add    (%rbx),%al
+  88:	04 05                	add    $0x5,%al
+  8a:	06                   	(bad)
+  8b:	07                   	(bad)
+  8c:	08 01                	or     %al,(%rcx)
+  8e:	02 03                	add    (%rbx),%al
+  90:	04 05                	add    $0x5,%al
+  92:	06                   	(bad)
+  93:	07                   	(bad)
+  94:	08 01                	or     %al,(%rcx)
+  96:	02 03                	add    (%rbx),%al
+  98:	04 05                	add    $0x5,%al
+  9a:	06                   	(bad)
+  9b:	07                   	(bad)
+  9c:	08 01                	or     %al,(%rcx)
+  9e:	02 03                	add    (%rbx),%al
+  a0:	04 05                	add    $0x5,%al
+  a2:	06                   	(bad)
+  a3:	07                   	(bad)
+  a4:	08 01                	or     %al,(%rcx)
+  a6:	02 03                	add    (%rbx),%al
+  a8:	04 05                	add    $0x5,%al
+  aa:	06                   	(bad)
+  ab:	07                   	(bad)
+  ac:	08 01                	or     %al,(%rcx)
+  ae:	02 03                	add    (%rbx),%al
+  b0:	04 05                	add    $0x5,%al
+  b2:	06                   	(bad)
+  b3:	07                   	(bad)
+  b4:	08 01                	or     %al,(%rcx)
+  b6:	02 03                	add    (%rbx),%al
+  b8:	04 05                	add    $0x5,%al
+  ba:	06                   	(bad)
+  bb:	07                   	(bad)
+  bc:	08 01                	or     %al,(%rcx)
+  be:	02 03                	add    (%rbx),%al
+  c0:	04 05                	add    $0x5,%al
+  c2:	06                   	(bad)
+  c3:	07                   	(bad)
+  c4:	08 01                	or     %al,(%rcx)
+  c6:	02 03                	add    (%rbx),%al
+  c8:	04 05                	add    $0x5,%al
+  ca:	06                   	(bad)
+  cb:	07                   	(bad)
+  cc:	08 01                	or     %al,(%rcx)
+  ce:	02 03                	add    (%rbx),%al
+  d0:	04 05                	add    $0x5,%al
+  d2:	06                   	(bad)
+  d3:	07                   	(bad)
+  d4:	08 01                	or     %al,(%rcx)
+  d6:	02 03                	add    (%rbx),%al
+  d8:	04 05                	add    $0x5,%al
+  da:	06                   	(bad)
+  db:	07                   	(bad)
+  dc:	08 01                	or     %al,(%rcx)
+  de:	02 03                	add    (%rbx),%al
+  e0:	04 05                	add    $0x5,%al
+  e2:	06                   	(bad)
+  e3:	07                   	(bad)
+  e4:	08 90 90 90 90 90    	or     %dl,-0x6f6f6f70(%rax)
+  ea:	90                   	nop
+  eb:	90                   	nop
+  ec:	90                   	nop
+  ed:	90                   	nop
+  ee:	90                   	nop
+  ef:	90                   	nop
+  f0:	90                   	nop
+  f1:	90                   	nop
+  f2:	90                   	nop
+  f3:	90                   	nop
+  f4:	90                   	nop
+  f5:	90                   	nop
+  f6:	90                   	nop
+  f7:	90                   	nop
+  f8:	90                   	nop
+  f9:	90                   	nop
+  fa:	90                   	nop
+  fb:	90                   	nop
+  fc:	90                   	nop
+  fd:	90                   	nop
+  fe:	90                   	nop
+  ff:	90                   	nop
+ 100:	90                   	nop
+ 101:	90                   	nop
+ 102:	90                   	nop
+ 103:	90                   	nop
+ 104:	90                   	nop
+ 105:	90                   	nop
+ 106:	90                   	nop
+ 107:	90                   	nop
+ 108:	90                   	nop
+ 109:	90                   	nop
+ 10a:	90                   	nop
+ 10b:	90                   	nop
+ 10c:	90                   	nop
+ 10d:	90                   	nop
+ 10e:	90                   	nop
+ 10f:	90                   	nop
+ 110:	90                   	nop
+ 111:	90                   	nop
+ 112:	90                   	nop
+ 113:	90                   	nop
+ 114:	90                   	nop
+ 115:	90                   	nop
+ 116:	90                   	nop
+ 117:	90                   	nop
+ 118:	90                   	nop
+ 119:	90                   	nop
+ 11a:	90                   	nop
+ 11b:	90                   	nop
+ 11c:	90                   	nop
+ 11d:	90                   	nop
+ 11e:	90                   	nop
+ 11f:	90                   	nop
+ 120:	90                   	nop
+ 121:	90                   	nop
+ 122:	90                   	nop
+ 123:	90                   	nop
+ 124:	90                   	nop
+ 125:	90                   	nop
+ 126:	90                   	nop
+ 127:	90                   	nop
+ 128:	90                   	nop
+ 129:	90                   	nop
+ 12a:	90                   	nop
+ 12b:	90                   	nop
+ 12c:	90                   	nop
+ 12d:	90                   	nop
+ 12e:	90                   	nop
+ 12f:	90                   	nop
+ 130:	90                   	nop
+ 131:	90                   	nop
+ 132:	90                   	nop
+ 133:	90                   	nop
+ 134:	90                   	nop
+ 135:	90                   	nop
+ 136:	90                   	nop
+ 137:	90                   	nop
+ 138:	90                   	nop
+ 139:	90                   	nop
+ 13a:	90                   	nop
+ 13b:	90                   	nop
+ 13c:	90                   	nop
+ 13d:	90                   	nop
+ 13e:	90                   	nop
+ 13f:	90                   	nop
+ 140:	90                   	nop
+ 141:	90                   	nop
+ 142:	90                   	nop
+ 143:	90                   	nop
+ 144:	90                   	nop
+ 145:	90                   	nop
+ 146:	90                   	nop
+ 147:	90                   	nop
+ 148:	90                   	nop
+ 149:	90                   	nop
+ 14a:	90                   	nop
+ 14b:	90                   	nop
+ 14c:	90                   	nop
+ 14d:	90                   	nop
+ 14e:	90                   	nop
+ 14f:	90                   	nop
+ 150:	90                   	nop
+ 151:	90                   	nop
+ 152:	90                   	nop
+ 153:	90                   	nop
+ 154:	90                   	nop
+ 155:	90                   	nop
+ 156:	90                   	nop
+ 157:	90                   	nop
+ 158:	90                   	nop
+ 159:	90                   	nop
+ 15a:	90                   	nop
+ 15b:	90                   	nop
+ 15c:	90                   	nop
+ 15d:	90                   	nop
+ 15e:	90                   	nop
+ 15f:	90                   	nop
+ 160:	90                   	nop
+ 161:	90                   	nop
+ 162:	90                   	nop
+ 163:	90                   	nop
+ 164:	90                   	nop
+ 165:	90                   	nop
+ 166:	90                   	nop
+ 167:	90                   	nop
+ 168:	90                   	nop
+ 169:	90                   	nop
+ 16a:	90                   	nop
+ 16b:	90                   	nop
+ 16c:	90                   	nop
+ 16d:	90                   	nop
+ 16e:	90                   	nop
+ 16f:	90                   	nop
+ 170:	90                   	nop
+ 171:	90                   	nop
+ 172:	90                   	nop
+ 173:	90                   	nop
+ 174:	90                   	nop
+ 175:	90                   	nop
+ 176:	90                   	nop
+ 177:	90                   	nop
+ 178:	90                   	nop
+ 179:	90                   	nop
+ 17a:	90                   	nop
+ 17b:	90                   	nop
+ 17c:	90                   	nop
+ 17d:	90                   	nop
+ 17e:	90                   	nop
+ 17f:	90                   	nop
+ 180:	90                   	nop
+ 181:	90                   	nop
+ 182:	90                   	nop
+ 183:	90                   	nop
+ 184:	90                   	nop
+ 185:	90                   	nop
+ 186:	90                   	nop
+ 187:	90                   	nop
+ 188:	90                   	nop
+ 189:	90                   	nop
+ 18a:	90                   	nop
+ 18b:	90                   	nop
+ 18c:	90                   	nop
+ 18d:	90                   	nop
+ 18e:	90                   	nop
+ 18f:	90                   	nop
+ 190:	90                   	nop
+ 191:	90                   	nop
+ 192:	90                   	nop
+ 193:	90                   	nop
+ 194:	90                   	nop
+ 195:	90                   	nop
+ 196:	90                   	nop
+ 197:	90                   	nop
+ 198:	90                   	nop
+ 199:	90                   	nop
+ 19a:	90                   	nop
+ 19b:	90                   	nop
+ 19c:	90                   	nop
+ 19d:	90                   	nop
+ 19e:	90                   	nop
+ 19f:	90                   	nop
+ 1a0:	90                   	nop
+ 1a1:	90                   	nop
+ 1a2:	90                   	nop
+ 1a3:	90                   	nop
+ 1a4:	90                   	nop
+ 1a5:	90                   	nop
+ 1a6:	90                   	nop
+ 1a7:	90                   	nop
+ 1a8:	90                   	nop
+ 1a9:	90                   	nop
+ 1aa:	90                   	nop
+ 1ab:	90                   	nop
+ 1ac:	90                   	nop
+ 1ad:	90                   	nop
+ 1ae:	90                   	nop
+ 1af:	90                   	nop
+ 1b0:	90                   	nop
+ 1b1:	90                   	nop
+ 1b2:	90                   	nop
+ 1b3:	90                   	nop
+ 1b4:	90                   	nop
+ 1b5:	90                   	nop
+ 1b6:	90                   	nop
+ 1b7:	90                   	nop
+ 1b8:	90                   	nop
+ 1b9:	90                   	nop
+ 1ba:	90                   	nop
+ 1bb:	90                   	nop
+ 1bc:	90                   	nop
+ 1bd:	90                   	nop
+ 1be:	90                   	nop
+ 1bf:	90                   	nop
+ 1c0:	90                   	nop
+ 1c1:	90                   	nop
+ 1c2:	90                   	nop
+ 1c3:	90                   	nop
+ 1c4:	90                   	nop
+ 1c5:	90                   	nop
+ 1c6:	90                   	nop
+ 1c7:	90                   	nop
+ 1c8:	90                   	nop
+ 1c9:	90                   	nop
+ 1ca:	90                   	nop
+ 1cb:	90                   	nop
+ 1cc:	90                   	nop
+ 1cd:	90                   	nop
+ 1ce:	90                   	nop
+ 1cf:	90                   	nop
+ 1d0:	90                   	nop
+ 1d1:	90                   	nop
+ 1d2:	90                   	nop
+ 1d3:	90                   	nop
+ 1d4:	90                   	nop
+ 1d5:	90                   	nop
+ 1d6:	90                   	nop
+ 1d7:	90                   	nop
+ 1d8:	90                   	nop
+ 1d9:	90                   	nop
+ 1da:	90                   	nop
+ 1db:	90                   	nop
+ 1dc:	90                   	nop
+ 1dd:	90                   	nop
+ 1de:	90                   	nop
+ 1df:	90                   	nop
+ 1e0:	90                   	nop
+ 1e1:	90                   	nop
+ 1e2:	90                   	nop
+ 1e3:	90                   	nop
+ 1e4:	90                   	nop
+ 1e5:	90                   	nop
+ 1e6:	90                   	nop
+ 1e7:	90                   	nop
+ 1e8:	90                   	nop
+ 1e9:	90                   	nop
+ 1ea:	90                   	nop
+ 1eb:	90                   	nop
+ 1ec:	90                   	nop
+ 1ed:	90                   	nop
+ 1ee:	90                   	nop
+ 1ef:	90                   	nop
+ 1f0:	90                   	nop
+ 1f1:	90                   	nop
+ 1f2:	90                   	nop
+ 1f3:	90                   	nop
+ 1f4:	90                   	nop
+ 1f5:	90                   	nop
+ 1f6:	90                   	nop
+ 1f7:	90                   	nop
+ 1f8:	90                   	nop
+ 1f9:	90                   	nop
+ 1fa:	90                   	nop
+ 1fb:	90                   	nop
+ 1fc:	90                   	nop
+ 1fd:	90                   	nop
+ 1fe:	90                   	nop
+ 1ff:	90                   	nop
+ 200:	90                   	nop
+ 201:	90                   	nop
+ 202:	90                   	nop
+ 203:	90                   	nop
+ 204:	90                   	nop
+ 205:	90                   	nop
+ 206:	90                   	nop
+ 207:	90                   	nop
+ 208:	90                   	nop
+ 209:	90                   	nop
+ 20a:	90                   	nop
+ 20b:	90                   	nop
+ 20c:	90                   	nop
+ 20d:	90                   	nop
+ 20e:	90                   	nop
+ 20f:	90                   	nop
+ 210:	90                   	nop
+ 211:	90                   	nop
+ 212:	90                   	nop
+ 213:	90                   	nop
+ 214:	90                   	nop
+ 215:	90                   	nop
+ 216:	90                   	nop
+ 217:	90                   	nop
+ 218:	90                   	nop
+ 219:	90                   	nop
+ 21a:	90                   	nop
+ 21b:	90                   	nop
+ 21c:	90                   	nop
+ 21d:	90                   	nop
+ 21e:	90                   	nop
+ 21f:	90                   	nop
+ 220:	90                   	nop
+ 221:	90                   	nop
+ 222:	90                   	nop
+ 223:	90                   	nop
+ 224:	90                   	nop
+ 225:	90                   	nop
+ 226:	90                   	nop
+ 227:	90                   	nop
+ 228:	90                   	nop
+ 229:	90                   	nop
+ 22a:	90                   	nop
+ 22b:	90                   	nop
+ 22c:	90                   	nop
+ 22d:	90                   	nop
+ 22e:	90                   	nop
+ 22f:	90                   	nop
+ 230:	90                   	nop
+ 231:	90                   	nop
+ 232:	90                   	nop
+ 233:	90                   	nop
+ 234:	90                   	nop
+ 235:	90                   	nop
+ 236:	90                   	nop
+ 237:	90                   	nop
+ 238:	90                   	nop
+ 239:	90                   	nop
+ 23a:	90                   	nop
+ 23b:	90                   	nop
+ 23c:	90                   	nop
+ 23d:	90                   	nop
+ 23e:	90                   	nop
+ 23f:	90                   	nop
+ 240:	90                   	nop
+ 241:	90                   	nop
+ 242:	90                   	nop
+ 243:	90                   	nop
+ 244:	90                   	nop
+ 245:	90                   	nop
+ 246:	90                   	nop
+ 247:	90                   	nop
+ 248:	90                   	nop
+ 249:	90                   	nop
+ 24a:	90                   	nop
+ 24b:	90                   	nop
+ 24c:	90                   	nop
+ 24d:	90                   	nop
+ 24e:	90                   	nop
+ 24f:	90                   	nop
+ 250:	90                   	nop
+ 251:	90                   	nop
+ 252:	90                   	nop
+ 253:	90                   	nop
+ 254:	90                   	nop
+ 255:	90                   	nop
+ 256:	90                   	nop
+ 257:	90                   	nop
+ 258:	90                   	nop
+ 259:	90                   	nop
+ 25a:	90                   	nop
+ 25b:	90                   	nop
+ 25c:	90                   	nop
+ 25d:	90                   	nop
+ 25e:	90                   	nop
+ 25f:	90                   	nop
+ 260:	90                   	nop
+ 261:	90                   	nop
+ 262:	90                   	nop
+ 263:	90                   	nop
+ 264:	90                   	nop
+ 265:	90                   	nop
+ 266:	90                   	nop
+ 267:	90                   	nop
+ 268:	90                   	nop
+ 269:	90                   	nop
+ 26a:	90                   	nop
+ 26b:	90                   	nop
+ 26c:	90                   	nop
+ 26d:	90                   	nop
+ 26e:	90                   	nop
+ 26f:	90                   	nop
+ 270:	90                   	nop
+ 271:	90                   	nop
+ 272:	90                   	nop
+ 273:	90                   	nop
+ 274:	90                   	nop
+ 275:	90                   	nop
+ 276:	90                   	nop
+ 277:	90                   	nop
+ 278:	90                   	nop
+ 279:	90                   	nop
+ 27a:	90                   	nop
+ 27b:	90                   	nop
+ 27c:	90                   	nop
+ 27d:	90                   	nop
+ 27e:	90                   	nop
+ 27f:	90                   	nop
+ 280:	90                   	nop
+ 281:	90                   	nop
+ 282:	90                   	nop
+ 283:	90                   	nop
+ 284:	90                   	nop
+ 285:	90                   	nop
+ 286:	90                   	nop
+ 287:	90                   	nop
+ 288:	90                   	nop
+ 289:	90                   	nop
+ 28a:	90                   	nop
+ 28b:	90                   	nop
+ 28c:	90                   	nop
+ 28d:	90                   	nop
+ 28e:	90                   	nop
+ 28f:	90                   	nop
+ 290:	90                   	nop
+ 291:	90                   	nop
+ 292:	90                   	nop
+ 293:	90                   	nop
+ 294:	90                   	nop
+ 295:	90                   	nop
+ 296:	90                   	nop
+ 297:	90                   	nop
+ 298:	90                   	nop
+ 299:	90                   	nop
+ 29a:	90                   	nop
+ 29b:	90                   	nop
+ 29c:	90                   	nop
+ 29d:	90                   	nop
+ 29e:	90                   	nop
+ 29f:	90                   	nop
+ 2a0:	90                   	nop
+ 2a1:	90                   	nop
+ 2a2:	90                   	nop
+ 2a3:	90                   	nop
+ 2a4:	90                   	nop
+ 2a5:	90                   	nop
+ 2a6:	90                   	nop
+ 2a7:	90                   	nop
+ 2a8:	90                   	nop
+ 2a9:	90                   	nop
+ 2aa:	90                   	nop
+ 2ab:	90                   	nop
+ 2ac:	90                   	nop
+ 2ad:	90                   	nop
+ 2ae:	90                   	nop
+ 2af:	90                   	nop
+ 2b0:	90                   	nop
+ 2b1:	90                   	nop
+ 2b2:	90                   	nop
+ 2b3:	90                   	nop
+ 2b4:	90                   	nop
+ 2b5:	90                   	nop
+ 2b6:	90                   	nop
+ 2b7:	90                   	nop
+ 2b8:	90                   	nop
+ 2b9:	90                   	nop
+ 2ba:	90                   	nop
+ 2bb:	90                   	nop
+ 2bc:	90                   	nop
+ 2bd:	90                   	nop
+ 2be:	90                   	nop
+ 2bf:	90                   	nop
+ 2c0:	90                   	nop
+ 2c1:	90                   	nop
+ 2c2:	90                   	nop
+ 2c3:	90                   	nop
+ 2c4:	90                   	nop
+ 2c5:	90                   	nop
+ 2c6:	90                   	nop
+ 2c7:	90                   	nop
+ 2c8:	90                   	nop
+ 2c9:	90                   	nop
+ 2ca:	90                   	nop
+ 2cb:	90                   	nop
+ 2cc:	90                   	nop
+ 2cd:	c3                   	ret

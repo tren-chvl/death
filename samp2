@@ -1,5 +1,5 @@
 
-/tmp/test/sample2:     file format elf64-x86-64
+a.out:     file format elf64-x86-64
 
 
 Disassembly of section .note.gnu.property:
@@ -445,7 +445,7 @@ Disassembly of section .note.ABI-tag:
 Disassembly of section .init_array:
 
 0000000000403df8 <__frame_dummy_init_array_entry>:
-  403df8:	10 12                	adc    %dl,(%rdx)
+  403df8:	20 11                	and    %dl,(%rcx)
   403dfa:	40 00 00             	rex add %al,(%rax)
   403dfd:	00 00                	add    %al,(%rax)
 	...

