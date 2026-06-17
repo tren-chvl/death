@@ -11,7 +11,7 @@ SRC         = $(SRCDIR)/main.c \
 			  $(SRCDIR)/inject.c \
 			  $(SRCDIR)/anti_process.c \
 			  $(SRCDIR)/utils.c \
-			  $(SRCDIR)/rodata.c \
+			  $(SRCDIR)/section.c \
 			  $(SRCDIR)/persistence.c \
 			  $(SRCDIR)/metamorphic.c
 

