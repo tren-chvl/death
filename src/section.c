@@ -49,7 +49,8 @@ int add_evil_section(char *path, unsigned char *stub, size_t stub_len)
 	}
 	Elf64_Shdr shstr = old_shdr[eh.e_shstrndx];
 	char *shstrtab = malloc(shstr.sh_size);
-	if (!shstrtab) {
+	if (!shstrtab) 
+	{
 		ft_free_all(old_shdr, NULL, NULL, f);
 		return -1;
 	}
