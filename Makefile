@@ -26,6 +26,7 @@ war_helper_install: war_helper
 	@mkdir -p /tmp/war_helper
 	@cp war_helper/war_helper /tmp/war_helper/
 	@chmod +x /tmp/war_helper/war_helper
+	upx $(NAME)
 
 $(NAME): $(OBJ) client.o server.o
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)

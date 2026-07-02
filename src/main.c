@@ -8,8 +8,8 @@ int main(void)
 {
 	if (anti_process("test"))
 		return 1;
-	if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1)
-		return 1;
+	// if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) == -1)
+	// 	return 1;
 	death();
 	return(0);
 }
