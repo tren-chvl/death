@@ -28,3 +28,4 @@ int ready_infect(char *path)
         return 1;
     return 0;
 }
+
