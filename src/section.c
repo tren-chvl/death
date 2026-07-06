@@ -2,143 +2,131 @@
 
 #define NEW_SECTION_NAME ".evil"
 
-void ft_free_all(Elf64_Shdr *old_shdr, char *shstrtab, Elf64_Shdr *new_shdr, FILE *f)
+typedef struct 
+{	
+	int is32;
+	int is64;
+}	ElfClass;
+
+ElfClass detect_class(FILE *f) 
 {
-	if (old_shdr)
-		free(old_shdr);
-	if (shstrtab)
-		free(shstrtab);
-	if (new_shdr)
-		free(new_shdr);
-	if (f)
-		fclose(f);
+	unsigned char ident[EI_NIDENT];
+	ElfClass cls = {0};
+	fseek(f, 0, SEEK_SET);
+	if (fread(ident, 1, EI_NIDENT, f) != EI_NIDENT)
+		return (cls);
+	if (ident[EI_CLASS] == ELFCLASS32)
+		cls.is32 = 1;
+	if (ident[EI_CLASS] == ELFCLASS64) 
+		cls.is64 = 1;
+	return cls;
 }
 
-int add_evil_section(char *path, unsigned char *stub, size_t stub_len)
+int add_evil_section(char *path, unsigned char *stub, size_t stub_len) 
 {
 	FILE *f = fopen(path, "r+b");
-	if (!f)
+	if (!f) 
 		return -1;
-	Elf64_Ehdr eh;
-	if (fread(&eh, 1, sizeof(eh), f) != sizeof(eh)) 
+	ElfClass cls = detect_class(f);
+	if (!cls.is32 && !cls.is64) 
 	{
-		ft_free_all(NULL, NULL, NULL, f);
+		fclose(f);
 		return -1;
 	}
-	if (eh.e_shoff == 0 || eh.e_shnum == 0) 
+	if (cls.is32) 
 	{
-		ft_free_all(NULL, NULL, NULL, f);
-		return -1;
+		Elf32_Ehdr eh;
+		fseek(f, 0, SEEK_SET);
+		fread(&eh, 1, sizeof(eh), f);
+		fseek(f, eh.e_shoff, SEEK_SET);
+		Elf32_Shdr *shdr = malloc(eh.e_shnum * sizeof(Elf32_Shdr));
+		fread(shdr, sizeof(Elf32_Shdr), eh.e_shnum, f);
+		Elf32_Shdr shstr = shdr[eh.e_shstrndx];
+		char *shstrtab = malloc(shstr.sh_size);
+		fseek(f, shstr.sh_offset, SEEK_SET);
+		fread(shstrtab, 1, shstr.sh_size, f);
+		size_t new_name_off = shstr.sh_size;
+		size_t new_shstr_size = shstr.sh_size + strlen(NEW_SECTION_NAME) + 1;
+		shstrtab = realloc(shstrtab, new_shstr_size);
+		memcpy(shstrtab + new_name_off, NEW_SECTION_NAME, strlen(NEW_SECTION_NAME) + 1);
+		shstr.sh_size = new_shstr_size;
+		shdr[eh.e_shstrndx] = shstr;
+		fseek(f, 0, SEEK_END);
+		Elf32_Off stub_off = ftell(f);
+		fwrite(stub, 1, stub_len, f);
+		Elf32_Shdr newsec = {0};
+		newsec.sh_name = new_name_off;
+		newsec.sh_type = SHT_PROGBITS;
+		newsec.sh_flags = SHF_ALLOC;
+		newsec.sh_offset = stub_off;
+		newsec.sh_size = stub_len;
+		newsec.sh_addralign = 0x10;
+		size_t new_shnum = eh.e_shnum + 1;
+		Elf32_Shdr *new_shdr = malloc(new_shnum * sizeof(Elf32_Shdr));
+		memcpy(new_shdr, shdr, eh.e_shnum * sizeof(Elf32_Shdr));
+		memcpy(&new_shdr[eh.e_shnum], &newsec, sizeof(newsec));
+		fseek(f, shstr.sh_offset, SEEK_SET);
+		fwrite(shstrtab, 1, new_shstr_size, f);
+		fseek(f, 0, SEEK_END);
+		Elf32_Off new_shoff = ftell(f);
+		fwrite(new_shdr, sizeof(Elf32_Shdr), new_shnum, f);
+		eh.e_shoff = new_shoff;
+		eh.e_shnum = new_shnum;
+		fseek(f, 0, SEEK_SET);
+		fwrite(&eh, 1, sizeof(eh), f);
+		free(shdr);
+		free(shstrtab);
+		free(new_shdr);
+		fclose(f);
+		return 0;
 	}
-	if (fseek(f, (long)eh.e_shoff, SEEK_SET) != 0) 
+	if (cls.is64) 
 	{
-		ft_free_all(NULL, NULL, NULL, f);
-		return -1;
+		Elf64_Ehdr eh;
+		fseek(f, 0, SEEK_SET);
+		fread(&eh, 1, sizeof(eh), f);
+		fseek(f, eh.e_shoff, SEEK_SET);
+		Elf64_Shdr *shdr = malloc(eh.e_shnum * sizeof(Elf64_Shdr));
+		fread(shdr, sizeof(Elf64_Shdr), eh.e_shnum, f);
+		Elf64_Shdr shstr = shdr[eh.e_shstrndx];
+		char *shstrtab = malloc(shstr.sh_size);
+		fseek(f, shstr.sh_offset, SEEK_SET);
+		fread(shstrtab, 1, shstr.sh_size, f);
+		size_t new_name_off = shstr.sh_size;
+		size_t new_shstr_size = shstr.sh_size + strlen(NEW_SECTION_NAME) + 1;
+		shstrtab = realloc(shstrtab, new_shstr_size);
+		memcpy(shstrtab + new_name_off, NEW_SECTION_NAME, strlen(NEW_SECTION_NAME) + 1);
+		shstr.sh_size = new_shstr_size;
+		shdr[eh.e_shstrndx] = shstr;
+		fseek(f, 0, SEEK_END);
+		Elf64_Off stub_off = ftell(f);
+		fwrite(stub, 1, stub_len, f);
+		Elf64_Shdr newsec = {0};
+		newsec.sh_name = new_name_off;
+		newsec.sh_type = SHT_PROGBITS;
+		newsec.sh_flags = SHF_ALLOC;
+		newsec.sh_offset = stub_off;
+		newsec.sh_size = stub_len;
+		newsec.sh_addralign = 0x10;
+		size_t new_shnum = eh.e_shnum + 1;
+		Elf64_Shdr *new_shdr = malloc(new_shnum * sizeof(Elf64_Shdr));
+		memcpy(new_shdr, shdr, eh.e_shnum * sizeof(Elf64_Shdr));
+		memcpy(&new_shdr[eh.e_shnum], &newsec, sizeof(newsec));
+		fseek(f, shstr.sh_offset, SEEK_SET);
+		fwrite(shstrtab, 1, new_shstr_size, f);
+		fseek(f, 0, SEEK_END);
+		Elf64_Off new_shoff = ftell(f);
+		fwrite(new_shdr, sizeof(Elf64_Shdr), new_shnum, f);
+		eh.e_shoff = new_shoff;
+		eh.e_shnum = new_shnum;
+		fseek(f, 0, SEEK_SET);
+		fwrite(&eh, 1, sizeof(eh), f);
+		free(shdr);
+		free(shstrtab);
+		free(new_shdr);
+		fclose(f);
+		return 0;
 	}
-	size_t old_shdr_size = eh.e_shnum * sizeof(Elf64_Shdr);
-	Elf64_Shdr *old_shdr = malloc(old_shdr_size);
-	if (!old_shdr) 
-	{
-		ft_free_all(NULL, NULL, NULL, f);
-		return -1;
-	}
-	if (fread(old_shdr, sizeof(Elf64_Shdr), eh.e_shnum, f) != (size_t)eh.e_shnum) 
-	{
-		ft_free_all(old_shdr, NULL, NULL, f);
-		return -1;
-	}
-	Elf64_Shdr shstr = old_shdr[eh.e_shstrndx];
-	char *shstrtab = malloc(shstr.sh_size);
-	if (!shstrtab) 
-	{
-		ft_free_all(old_shdr, NULL, NULL, f);
-		return -1;
-	}
-	if (fseek(f, (long)shstr.sh_offset, SEEK_SET) != 0) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	if (fread(shstrtab, 1, shstr.sh_size, f) != shstr.sh_size) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	size_t new_name_off   = shstr.sh_size;
-	size_t new_shstr_size = shstr.sh_size + strlen(NEW_SECTION_NAME) + 1;
-	char *new_shstrtab = realloc(shstrtab, new_shstr_size);
-	if (!new_shstrtab) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	shstrtab = new_shstrtab;
-	memcpy(shstrtab + new_name_off, NEW_SECTION_NAME,strlen(NEW_SECTION_NAME) + 1);
-	shstr.sh_size = new_shstr_size;
-	old_shdr[eh.e_shstrndx] = shstr;
-	if (fseek(f, 0, SEEK_END) != 0) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	Elf64_Off stub_off = ftell(f);
-	if (fwrite(stub, 1, stub_len, f) != stub_len) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	Elf64_Shdr newsec;
-	memset(&newsec, 0, sizeof(newsec));
-	newsec.sh_name      = new_name_off;
-	newsec.sh_type      = SHT_PROGBITS;
-	newsec.sh_flags     = SHF_ALLOC;
-	newsec.sh_offset    = stub_off;
-	newsec.sh_addr      = 0;
-	newsec.sh_size      = stub_len;
-	newsec.sh_addralign = 0x10;
-	size_t new_shnum     = eh.e_shnum + 1;
-	size_t new_shdr_size = new_shnum * sizeof(Elf64_Shdr);
-	Elf64_Shdr *new_shdr = malloc(new_shdr_size);
-	if (!new_shdr) 
-	{
-		ft_free_all(old_shdr, shstrtab, NULL, f);
-		return -1;
-	}
-	memcpy(new_shdr, old_shdr, old_shdr_size);
-	memcpy(&new_shdr[eh.e_shnum], &newsec, sizeof(newsec));
-	if (fseek(f, (long)shstr.sh_offset, SEEK_SET) != 0) 
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	if (fwrite(shstrtab, 1, new_shstr_size, f) != new_shstr_size) 
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	if (fseek(f, 0, SEEK_END) != 0) 
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	Elf64_Off new_shoff = ftell(f);
-	if (fwrite(new_shdr, sizeof(Elf64_Shdr), new_shnum, f) != new_shnum) 
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	eh.e_shoff = new_shoff;
-	eh.e_shnum = new_shnum;
-	if (fseek(f, 0, SEEK_SET) != 0)
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	if (fwrite(&eh, 1, sizeof(eh), f) != sizeof(eh)) 
-	{
-		ft_free_all(old_shdr, shstrtab, new_shdr, f);
-		return -1;
-	}
-	ft_free_all(old_shdr, shstrtab, new_shdr, f);
-	return 0;
+	fclose(f);
+	return (-1);
 }
