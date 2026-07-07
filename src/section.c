@@ -2,13 +2,7 @@
 
 #define NEW_SECTION_NAME ".evil"
 
-typedef struct 
-{	
-	int is32;
-	int is64;
-}	ElfClass;
-
-ElfClass detect_class(FILE *f) 
+ElfClass detect_section_evil(FILE *f) 
 {
 	unsigned char ident[EI_NIDENT];
 	ElfClass cls = {0};
@@ -27,7 +21,7 @@ int add_evil_section(char *path, unsigned char *stub, size_t stub_len)
 	FILE *f = fopen(path, "r+b");
 	if (!f) 
 		return -1;
-	ElfClass cls = detect_class(f);
+	ElfClass cls = detect_section_evil(f);
 	if (!cls.is32 && !cls.is64) 
 	{
 		fclose(f);

