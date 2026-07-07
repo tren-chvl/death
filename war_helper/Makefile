@@ -1,4 +1,4 @@
-CC = cc
+CC = cc 
 
 all: war_helper
 
