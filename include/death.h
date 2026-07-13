@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <pthread.h>
 
 #define SIGNATURE "D34TH version 1.0 (c)oded by marcheva-dedavid - [00000000]"
 #define SIGNATURE_LEN (sizeof(SIGNATURE) - 1)
